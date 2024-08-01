@@ -141,6 +141,7 @@ python launch.py --config configs/interested_refine.yaml --train --gpu 0 system.
 # optional: you can also try pixart-alpha as guidance by:
 python launch.py --config configs/interested_refine_pixart.yaml --train --gpu 0 system.prompt_processor.prompt="your prompt" resume=path_to_your/ckpts/last.ckpt trainer.max_steps=10000 system.init_type='threestudio' system.only_super=True
 ```
+we will update more detailed illustrations soon.
 
 ## Acknowledgement
 Interactive3D is built on many amazing research works, thanks a lot to all the authors for sharing! Thank [Yiyuan](https://github.com/invictus717) for the valuable discussion and paper refinement.
