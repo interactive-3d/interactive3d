@@ -1,0 +1,153 @@
+name: "mvdream-gs"
+tag: "${rmspace:${system.prompt_processor.prompt},_}"
+exp_root_dir: "outputs_gs"
+seed: 0
+
+# data_type: "random-camera-datamodule"
+# data:
+#   batch_size: 4
+#   width: 512
+#   height: 512
+#   camera_distance_range: [2.5, 2.5]
+#   fovy_range: [60, 70]
+#   elevation_range: [-20, 90]
+#   light_sample_strategy: "dreamfusion"
+#   eval_camera_distance: 2.5
+#   eval_fovy_deg: 70
+
+data_type: "random-multiview-camera-datamodule"
+data:
+  batch_size: [8,4] # must be dividable by n_view
+  n_view: 4
+  # 0-4999: 64x64, >=5000: 256x256
+  width: [256, 512]
+  height: [256, 512]
+  resolution_milestones: [5000]
+  relative_radius: false
+  camera_distance_range: [2.5, 2.5] # [0.8, 1.0] # relative
+  fovy_range: [60, 60] # [15, 60]
+  elevation_range: [0, 30]
+  camera_perturb: 0.
+  center_perturb: 0.
+  up_perturb: 0.
+  n_val_views: 4
+  eval_camera_distance: 2.5 # 3.0
+  eval_fovy_deg: 70. # 40.
+  # shape_init: true
+  # init_steps: 500
+  # fix_fov: true
+  force_fovy_rad: true
+  near_far: [0.01, 100]
+
+system_type: "gaussian-splatting-system"
+system:
+  invert_bg_prob: 0.0
+
+  geometry_type: "gaussian"
+  geometry:
+    position_lr_init: 0.005
+    position_lr_final: 0.00003
+    position_lr_delay_mult: 0.02
+    position_lr_max_steps: ${trainer.max_steps}
+    scale_lr_init: 0.003
+    scale_lr_final: 0.001
+    scale_lr_max_steps: ${trainer.max_steps}
+    feature_lr: 0.01
+    opacity_lr: 0.003
+    scaling_lr: 0.003
+    rotation_lr: 0.003
+    densification_interval: 1000
+    prune_interval: 500
+    opacity_reset_interval: 100000
+    densify_from_iter: 1000
+    densify_until_iter: 10000
+    prune_from_iter: 500
+    prune_until_iter: ${trainer.max_steps}
+    # prune_until_iter: 0
+    densify_grad_threshold: 0.02
+    min_opac_prune: 0.05
+    split_thresh: 0.02 
+    radii2d_thresh: 1000
+    init_num_pts: 4096
+    pc_init_radius: 0.8
+    opacity_init: 0.8
+    scales_init: 0.02
+    # mesh init
+    init: true
+    type: mesh
+    mesh: debug_data/sample_128.ply
+    rotate_xy: true
+    flip_z: true
+    flip_x: true
+    prompt: a human face
+    num_points: 4096
+    mean_std: 0.8
+    svec_val: 0.02
+    alpha_val: 0.8
+    random_color: true
+    facex: true
+
+  renderer_type: "diff-gaussian-rasterizer"
+  renderer:
+    debug: false
+
+  material_type: "no-material" # unused
+  material:
+    n_output_dims: 0
+
+  background_type: "solid-color-background" # unused
+
+  # prompt_processor_type: "stable-diffusion-prompt-processor"
+  # prompt_processor:
+  #   pretrained_model_name_or_path: "/cpfs01/shared/Gveval3/gongkaixiong/dlh/sd_weights/sd-2.1-base" # "stabilityai/stable-diffusion-2-1-base"
+  #   prompt: ???
+
+  # guidance_type: "stable-diffusion-guidance"
+  # guidance:
+  #   pretrained_model_name_or_path: "/cpfs01/shared/Gveval3/gongkaixiong/dlh/sd_weights/sd-2.1-base" # "stabilityai/stable-diffusion-2-1-base"
+  #   guidance_scale: 100.0
+  #   weighting_strategy: sds
+  #   min_step_percent: 0.02
+  #   max_step_percent: [2000, 0.98, 0.5, 2001]
+
+  prompt_processor_type: "stable-diffusion-prompt-processor"
+  prompt_processor:
+    pretrained_model_name_or_path: "/cpfs01/shared/Gveval3/gongkaixiong/dlh/sd_weights/sd-2.1-base" # "/home/lihe/workspace/sd-2.1-base" # "stabilityai/stable-diffusion-2-1-base"
+    prompt: ???
+    negative_prompt: "ugly, bad anatomy, blurry, pixelated obscure, unnatural colors, poor lighting, dull, and unclear, cropped, lowres, low quality, artifacts, duplicate, morbid, mutilated, poorly drawn face, deformed, dehydrated, bad proportions"
+    front_threshold: 30.
+    back_threshold: 30.
+  
+  guidance_type: "multiview-diffusion-guidance"
+  guidance:
+    model_name: "sd-v2.1-base-4view"
+    ckpt_path: "/cpfs01/shared/Gveval3/gongkaixiong/dlh/sd-v2.1-base-4view.pt" # null # path to a pre-downloaded checkpoint file (null for loading from URL)
+    guidance_scale: 50.0
+    min_step_percent: [0, 0.98, 0.02, 8000]  # (start_iter, start_val, end_val, end_iter)
+    max_step_percent: [0, 0.98, 0.50, 8000]
+    recon_loss: true
+    recon_std_rescale: 0.5
+
+  loggers:
+    wandb:
+      enable: false
+      project: 'threestudio'
+      name: None
+
+  loss:
+    lambda_sds: 0.1
+    lambda_position: 0.0
+    lambda_opacity: 0.0
+
+trainer:
+  max_steps: 15000
+  log_every_n_steps: 1
+  num_sanity_val_steps: 0
+  val_check_interval: 100
+  enable_progress_bar: true
+  precision: 32-true
+
+checkpoint:
+  save_last: true # save at each validation time
+  save_top_k: -1
+  every_n_train_steps: ${trainer.max_steps}

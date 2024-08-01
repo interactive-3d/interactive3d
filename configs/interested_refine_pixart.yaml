@@ -1,0 +1,184 @@
+name: "intersted_refine_pixart"
+tag: "${rmspace:${system.prompt_processor.prompt},_}"
+exp_root_dir: "outputs"
+seed: 0
+
+data_type: "edit-multiview-camera-datamodule"
+data:
+  batch_size: [4, 4] # [8,4] # must be dividable by n_view
+  n_view: 4 # 4
+  # 0-4999: 64x64, >=5000: 256x256
+  width: [128, 128] # [64, 256]
+  height: [128, 128] # [64, 256]
+  resolution_milestones: [5000]
+  camera_distance_range: [0.8, 1.0] # [1.5, 1.5] # relative
+  fovy_range: [15, 60]
+  elevation_range: [0, 30]
+  camera_perturb: 0.
+  center_perturb: 0.
+  up_perturb: 0.
+  n_val_views: 4
+  n_test_views: 120 # 360
+  eval_height: 512
+  eval_width: 512
+  eval_camera_distance: 4.0 # 3.0
+  eval_fovy_deg: 40.
+  shape_init: false # true
+  init_steps: 500
+  fix_fov: false # true
+  enable_edit: true # edit
+  # rotate_init: -90 # we dont need this for gs init
+  edit_bs: 1 # 1
+  edit_n_view: 1 # 1
+  edit_width:  256 # 256 # 512 # 128 # 256
+  edit_height: 256 # 256 # 512 # 128 # 256
+  edit_camera_distance_range: [4.0, 4.0] # [3.5, 3.5] # [0.8, 1.0] # relative
+  edit_fovy_range: [40, 40] # [15, 60]
+  edit_elevation_range: [30, 40] # [0, 30]
+  edit_azimuth_range: [0, 0] # [-180, 180]
+  start_edit_step: 0
+
+system_type: "mvdream-system"
+system:
+  eval_white_bg: true
+  init: true
+  init_type: "threestudio"
+  only_super: true 
+  render_org: false 
+  geometry_type: "implicit-volume-edit"
+  geometry:
+    radius: 1.2 # 1.2 previous # NOTE
+    normal_type: "analytic"
+    density_bias: "blob_magic3d"
+    density_activation: softplus
+    density_blob_scale: 10.
+    density_blob_std: 0.5
+
+    part_num: 1 # 6
+    only_train_part: [0, 1, 4] # [0, 1, 2, 3, 4, 5]
+
+    pos_encoding_config:
+      otype: HashGrid
+      n_levels: 16
+      n_features_per_level: 2
+      log2_hashmap_size: 19
+      base_resolution: 16
+      per_level_scale: 1.447269237440378 # max resolution 4096
+    
+    edit_pos_encoding_config:
+      otype: HashGrid
+      n_levels: 16
+      n_features_per_level: 2
+      log2_hashmap_size: 24 # 19
+      base_resolution: 16 # 256 # 4096
+      per_level_scale: 1.447269237440378 # 2 # max resolution 4096 (16 * 256) - > (4096 * 128) -> 524288
+
+  material_type: "diffuse-with-point-light-material"
+  material:
+    ambient_only_steps: 1000 # 5000
+    textureless_prob: 0.5
+    ambient_light_color: [1.0, 1.0, 1.0]
+    diffuse_light_color: [0.0, 0.0, 0.0]
+    soft_shading: true
+    albedo_activation: sigmoid
+
+  background_type: "neural-environment-map-background"
+  background:
+    color_activation: sigmoid
+    random_aug: false # true
+    share_aug_bg: true
+
+  renderer_type: "nerf-volume-renderer"
+  renderer:
+    radius: ${system.geometry.radius}
+    num_samples_per_ray: 512 # 256 
+    alpha_thre: 0.01 
+    prune_alpha_threshold: false
+    edit: true 
+    index_str: "_gs"
+    mask_occ: false
+    save_occ: false
+  
+  prompt_processor_type: "pixart-prompt-processor"
+  prompt_processor:
+    pretrained_model_name_or_path: "PixArt-alpha/PixArt-XL-2-1024-MS" # PixArt-alpha/PixArt-XL-2-512x512 # "PixArt-alpha/PixArt-XL-2-1024-MS"
+    prompt: ???
+    negative_prompt: "" # "ugly, bad anatomy, blurry, pixelated obscure, unnatural colors, poor lighting, dull, and unclear, cropped, lowres, low quality, artifacts, duplicate, morbid, mutilated, poorly drawn face, deformed, dehydrated, bad proportions"
+    front_threshold: 30.
+    back_threshold: 30.
+
+  guidance_type: "multiview-diffusion-guidance"
+  guidance:
+    model_name: "sd-v2.1-base-4view"
+    ckpt_path: null # path to a pre-downloaded checkpoint file (null for loading from URL)
+    guidance_scale: 50.0
+    min_step_percent: [0, 0.02, 0.02, 8000] # [0, 0.65, 0.02, 8000] # [0, 0.98, 0.02, 8000]  # (start_iter, start_val, end_val, end_iter)
+    max_step_percent: [0, 0.50, 0.50, 8000] # [0, 0.65, 0.50, 8000] # [0, 0.98, 0.50, 8000]
+    recon_loss: true
+    recon_std_rescale: 0.5
+
+  edit_guidance_type: "pixart-guidance"
+  edit_guidance:
+    pretrained_model_name_or_path: "PixArt-alpha/PixArt-XL-2-1024-MS" # PixArt-alpha/PixArt-XL-2-512x512 # "PixArt-alpha/PixArt-XL-2-1024-MS"
+    weighting_strategy: sds
+    guidance_scale: 100 # 20.
+    min_step_percent: 0.02
+    max_step_percent: 0.5 # 0.98
+    res: 1024 # 512 
+  
+  # edit_guidance_type: "copy-guidance"
+
+  loggers:
+    wandb:
+      enable: false
+      project: "threestudio"
+
+  loss:
+    lambda_sds: 1.
+    lambda_orient: [0, 10., 1000., 1000] # [0, 10., 1000., 5000]
+    lambda_sparsity: 0.
+    lambda_opaque: 0.
+    lambda_z_variance: 0.
+  
+  edit_loss:
+    lambda_sds: 1.
+    lambda_orient: [0, 10., 1000., 1000] # [0, 10., 1000., 5000]
+    # lambda_normal_consistency: 10000.
+    # vsd
+    # lambda_vsd: 1.
+    # lambda_lora: 1.
+    # end vsd
+
+  optimizer:
+    name: AdamW
+    args:
+      betas: [0.9, 0.99]
+      eps: 1.e-15
+    params:
+      geometry.encoding:
+        lr: 0.01
+      geometry.density_network:
+        lr: 0.001
+      geometry.feature_network:
+        lr: 0.001
+      background:
+        lr: 0.001
+      geometry.edit_encoding_list: 
+        lr: 0.01
+      geometry.edit_density_network_list:
+        lr: 0.001
+      geometry.edit_feature_network_list:
+        lr: 0.001
+
+trainer:
+  max_steps: 50000 # 40000 # 10000
+  log_every_n_steps: 1
+  num_sanity_val_steps: 0
+  val_check_interval: 2000 
+  enable_progress_bar: true
+  precision: 16-mixed
+
+checkpoint:
+  save_last: true
+  save_top_k: -1
+  every_n_train_steps: ${trainer.max_steps}
