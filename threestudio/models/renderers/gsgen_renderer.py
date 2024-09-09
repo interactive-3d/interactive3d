@@ -18,8 +18,8 @@ class GSRenderer(nn.Module):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         if ckpt is None:
             ckpt = "path_to_your_ckpt.pt"
-            ckpt = torch.load(ckpt, map_location="cpu")
-            cfg = OmegaConf.create(ckpt["cfg"])
+        ckpt = torch.load(ckpt, map_location="cpu")
+        cfg = OmegaConf.create(ckpt["cfg"])
         self.renderer = GaussianSplattingRenderer.load(
             cfg.renderer, ckpt["params"]
         ).to(device)
@@ -60,7 +60,7 @@ class GSRenderer(nn.Module):
 
             c2w = torch.matmul(trans, c2w)
             sampled_cameras['c2w'] = c2w[:, :3].cuda()
-            out = self.renderer(sampled_cameras, self.cfg.use_bg, self.cfg.rgb_only, fit=True)
+            out = self.renderer(sampled_cameras, self.cfg.use_bg, self.cfg.rgb_only)
         comp_rgb = out["rgb"]
         # save_image(out['rgb'].permute(0, 3, 1, 2), f'debug_data/gsgen_gt.png')
     

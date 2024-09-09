@@ -35,7 +35,7 @@ import math
 
 import sys
 
-from gs.utils.camera import CameraInfo
+from gsgen.utils.camera import CameraInfo
 
 @dataclass
 class GSEditRandomCameraDataModuleConfig:

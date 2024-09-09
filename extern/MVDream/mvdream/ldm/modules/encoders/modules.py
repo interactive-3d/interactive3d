@@ -144,10 +144,8 @@ class FrozenOpenCLIPEmbedder(AbstractEncoder):
                 freeze=True, layer="last"):
         super().__init__()
         assert layer in self.LAYERS
-        print("+++++++++++ load local files by lihe +++++++++", arch, version)
-        # model, _, _ = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained=version)
-        # model, _, _ = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained='/home/lihe/workspace/vit-h-14/open_clip_pytorch_model.bin')
-        model, _, _ = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained='/nvme/lihe/workspace/weights/vit-h-14/open_clip_pytorch_model.bin')
+        print("+++++++++++ load local files +++++++++", arch, version)
+        model, _, _ = open_clip.create_model_and_transforms(arch, device=torch.device('cpu'), pretrained=version)
         del model.visual
         self.model = model
 

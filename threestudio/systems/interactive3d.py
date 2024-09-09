@@ -35,13 +35,11 @@ class Interactive3dSystem(BaseLift3DSystem):
         self.init_cnt = 0
         if self.cfg.init:
             if self.cfg.init_type == "gsgen":
-                self.init_renderer = threestudio.find('gs-renderer')()
+                self.init_renderer = threestudio.find('gs-renderer')(ckpt=self.cfg.init_ckpt)
             elif self.cfg.init_type == "magic123":
-                self.init_renderer = threestudio.find('magic123-renderer')()
-            elif self.cfg.init_type == "lift3d":
-                self.init_renderer = threestudio.find('lift3d-renderer')()
+                self.init_renderer = threestudio.find('magic123-renderer')(ckpt=self.cfg.init_ckpt)
             elif self.cfg.init_type == "threestudio":
-                self.init_renderer = threestudio.find('threestudio-renderer')()
+                self.init_renderer = threestudio.find('threestudio-renderer')(ckpt=self.cfg.init_ckpt)
 
         if self.cfg.edit_guidance_type != "":
             if self.cfg.edit_guidance_type != "copy-guidance":
@@ -199,6 +197,7 @@ class Interactive3dSystem(BaseLift3DSystem):
                 edit_batch['org_opacity'] = org_opacity
                 save_imgs = torch.cat([save_imgs, org_imgs.permute(0, 3, 1, 2)], dim=0)
 
+            os.makedirs(f'debug_data', exist_ok=True)
             save_image(save_imgs, f'debug_data/{prompt}_edit.png')
             
             if edit_prompt is not None:
@@ -227,6 +226,7 @@ class Interactive3dSystem(BaseLift3DSystem):
                 save_imgs = torch.cat([gt_rgb, pred_rgb], dim=0)
                 save_imgs = save_imgs.permute(0, 3, 1, 2)
                 if self.init_cnt % 10 == 0:
+                    os.makedirs(f'debug_data', exist_ok=True)
                     save_image(save_imgs, 'debug_data/train_init_shape.png')
                 loss = F.l1_loss(pred_rgb, gt_rgb)
                 return loss
@@ -239,6 +239,7 @@ class Interactive3dSystem(BaseLift3DSystem):
             if self.init_cnt % 10 == 0 and 'comp_rgb' in out.keys():
                 save_imgs = out['comp_rgb'].permute(0, 3, 1, 2)
                 prompt = self.prompt_processor.prompt
+                os.makedirs(f'debug_data', exist_ok=True)
                 save_image(save_imgs, f'debug_data/{prompt}.png')
 
         if not self.cfg.only_super:

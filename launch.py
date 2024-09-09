@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-sys.path.insert(0,"/nvme/lihe/workspace/new_diffusers/diffusers/src")
+sys.path.insert(0,"./gsgen")
 
 class ColoredFilter(logging.Filter):
     """

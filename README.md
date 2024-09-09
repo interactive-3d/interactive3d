@@ -91,7 +91,7 @@ sudo apt-get install libncurses5-dev libncursesw5-dev
 - [Optional] Install gsgen, more information can be found [here](https://github.com/gsgen3d/gsgen)
 ```sh
 git clone https://github.com/gsgen3d/gsgen.git
-cd gs
+cd gsgen/gs
 ./build.sh
 ```
 note: refer to [threestudio](https://github.com/threestudio-project/threestudio) for some installation issues.
@@ -101,12 +101,13 @@ note: refer to [threestudio](https://github.com/threestudio-project/threestudio)
 result or generate one by:
 ```sh
 # the checkpoint will be saved to gsgen folder
-cd gsgen/
+cd ../../gsgen
 python main.py --config-name=base prompt.prompt="<prompt>"
 ```
 - convert gaussian splatting to NeRF:
 ```sh
 # feel free to adjust the hparams in the config
+cd ..
 python launch.py --config configs/fit_gs.yaml --train --gpu 0 system.prompt_processor.prompt="your prompt" trainer.max_steps=1800
 ```
 

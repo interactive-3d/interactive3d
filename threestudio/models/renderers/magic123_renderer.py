@@ -16,7 +16,7 @@ class Magic123Renderer(nn.Module):
     def __init__(self, ckpt=None):
         super(Magic123Renderer, self).__init__()
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        ckpt = "path_to_your_checkpoint.ckpt"
+        ckpt = "path_to_your_checkpoint.ckpt" if ckpt is None else ckpt
         cfg_path = "parsed.yaml"
         # parse YAML config to OmegaConf
         cfg: ExperimentConfig

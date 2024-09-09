@@ -34,6 +34,7 @@ system:
   eval_white_bg: true
   init: true
   init_type: "gsgen"
+  init_ckpt: "path_to_your_ckpt.pt"
   geometry_type: "implicit-volume"
   geometry:
     radius: 1.2 # 1.4 # 1.2 # 1.0

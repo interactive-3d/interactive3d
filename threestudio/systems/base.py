@@ -226,6 +226,8 @@ class BaseLift3DSystem(BaseSystem):
         only_super: bool = False
         render_org: bool = False
 
+        init_ckpt: Optional[str] = None
+
     cfg: Config
 
     def configure(self) -> None:
